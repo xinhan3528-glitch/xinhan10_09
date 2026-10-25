@@ -1,17 +1,21 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"xinhan10_09/Internal/store"
 
 	"github.com/go-chi/chi/v5"
 )
 
-type PostHandler struct{}
+type PostHandler struct {
+	postStore store.PostStore
+}
 
-func NewPostHandler() *PostHandler {
-	return &PostHandler{}
+func NewPostHandler(ps store.PostStore) *PostHandler {
+	return &PostHandler{postStore: ps}
 }
 
 func (ph *PostHandler) HandlerGetPostById(w http.ResponseWriter, r *http.Request) {
@@ -31,5 +35,26 @@ func (ph *PostHandler) HandlerGetPostById(w http.ResponseWriter, r *http.Request
 }
 
 func (ph *PostHandler) HandlerCreatePost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "新增Post已开建\n")
+
+	var post store.Post
+
+	err := json.NewDecoder(r.Body).Decode(&post) //change json to golang
+	if err != nil {
+		http.Error(w, "Invaild request data", http.StatusBadRequest)
+		return
+	} // to here..
+
+	//now add to database..
+
+	createdPost, err := ph.postStore.CreatePost(&post) //&post = var post store.Post; and to createPost database process
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "can't create Post", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)      //assign w.Header
+	json.NewEncoder(w).Encode(createdPost) //golang to json
+
 }
