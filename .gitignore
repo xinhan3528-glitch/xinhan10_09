@@ -1,0 +1,10 @@
+# PostgreSQL data
+/database/postgres-data/
+
+# Environment secrets
+.env
+.env.*
+
+# Go build files
+*.exe
+*.out
